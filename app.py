@@ -4,12 +4,29 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import MySQLdb.cursors
 import os
+import json
 from datetime import datetime
 from model.predictor import ExpensePredictor
 from model.categorizer import ExpenseCategorizer
+from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(24))
+
+# Google OAuth Configuration
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url=os.getenv("GOOGLE_DISCOVERY_URL"),
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 
 # MySQL Configurations
 app.config['MYSQL_HOST'] = 'localhost'
@@ -85,6 +102,37 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
+    return redirect(url_for('login'))
+
+@app.route('/login/google')
+def google_login():
+    return google.authorize_redirect(url_for('google_authorize', _external=True))
+
+@app.route('/login/google/authorize')
+def google_authorize():
+    token = google.authorize_access_token()
+    user_info = token.get('userinfo')
+    if user_info:
+        email = user_info['email']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM users WHERE email = %s', (email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            # Create a new user for Google login if they don't exist
+            # We use a random password since they'll always use Google
+            dummy_password = bcrypt.generate_password_hash(os.urandom(16).hex()).decode('utf-8')
+            cursor.execute('INSERT INTO users (email, password) VALUES (%s, %s)', (email, dummy_password))
+            mysql.connection.commit()
+            cursor.execute('SELECT * FROM users WHERE email = %s', (email,))
+            user = cursor.fetchone()
+        
+        cursor.close()
+        user_obj = User(user['id'], user['email'])
+        login_user(user_obj)
+        return redirect(url_for('index'))
+    
+    flash('Google authentication failed.', 'danger')
     return redirect(url_for('login'))
 
 # Expense API
