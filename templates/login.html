@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker - Login/Signup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        burgundy: '#93032E',
+                        night: '#151515',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-night h-screen flex items-center justify-center text-slate-200">
+    <div class="bg-[#1a1a1a] p-8 rounded-2xl shadow-2xl w-full max-w-md border border-burgundy/20">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-burgundy">FinanceAI</h1>
+            <p class="text-slate-400 mt-2">{{ 'Welcome back!' if action == 'login' else 'Create your account' }}</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-4 p-3 rounded-lg text-sm {{ 'bg-red-100 text-red-700' if category == 'danger' else 'bg-green-100 text-green-700' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('login' if action == 'login' else 'signup') }}" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Email or Mobile Number</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                        <i class="fas fa-user text-xs"></i>
+                    </span>
+                    <input type="text" name="email" required 
+                           class="block w-full pl-10 pr-3 py-2 bg-night border border-slate-700 rounded-lg focus:ring-2 focus:ring-burgundy focus:border-transparent outline-none transition-all text-slate-200 placeholder-slate-600"
+                           placeholder="you@example.com or +1234567890">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Password</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                        <i class="fas fa-lock text-xs"></i>
+                    </span>
+                    <input type="password" name="password" required 
+                           class="block w-full pl-10 pr-3 py-2 bg-night border border-slate-700 rounded-lg focus:ring-2 focus:ring-burgundy focus:border-transparent outline-none transition-all text-slate-200 placeholder-slate-600"
+                           placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-burgundy hover:bg-[#b00438] text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-lg shadow-burgundy/20">
+                {{ 'Sign In' if action == 'login' else 'Sign Up' }}
+            </button>
+        </form>
+
+        <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-slate-800"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+                <span class="px-2 bg-[#1a1a1a] text-slate-500">Or continue with</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+            <button class="flex items-center justify-center gap-2 px-4 py-2 border border-slate-700 rounded-lg hover:bg-night transition-colors text-slate-300 text-sm font-medium">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
+                Google
+            </button>
+        </div>
+
+        <div class="mt-6 text-center text-sm text-slate-400">
+            {% if action == 'login' %}
+                Don't have an account? <a href="{{ url_for('signup') }}" class="text-burgundy font-medium hover:underline">Sign up</a>
+            {% else %}
+                Already have an account? <a href="{{ url_for('login' ) }}" class="text-burgundy font-medium hover:underline">Log in</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
